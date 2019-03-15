@@ -1,0 +1,9 @@
+[package]
+name = "aria2xspf"
+version = "0.1.0"
+authors = ["shimunn <>"]
+edition = "2018"
+
+[dependencies]
+xml-rs = "0.8.0"
+derive_builder = "0.7.1"
