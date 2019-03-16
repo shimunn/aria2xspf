@@ -66,11 +66,11 @@ fn convert<I: Iterator<Item = Track>, W: Write>(tracks: I, w: &mut EventWriter<W
 
 fn tracks<'a, I: Iterator<Item = String> + 'a>(aria: I) -> Box<Iterator<Item = Track> + 'a> {
     let tracks = aria
-        .scan(TrackBuilder::default(), |mut builder, line| {
+        .scan(TrackBuilder::default(), |builder, line| {
             if !builder.url.is_some() {
                 builder.url(line);
             } else {
-                if line.starts_with("\t") {
+                if line.starts_with("\tout=") {
                     builder.title(
                         line.chars()
                             .skip_while(|c| c != &'=')
