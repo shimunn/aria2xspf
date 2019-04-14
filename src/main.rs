@@ -38,7 +38,7 @@ impl Track {
         w.write(XmlEvent::start_element("p"))?;
         w.write(XmlEvent::characters(&self.title))?;
         w.write(XmlEvent::end_element())?;
-        w.write(XmlEvent::start_element("video").attr("controls", ""))?;
+        w.write(XmlEvent::start_element("video").attr("controls", "controls").attr("preload", "none"))?;
         w.write(XmlEvent::start_element("source").attr("src", &self.url))?;
         w.write(XmlEvent::end_element())?;
         w.write(XmlEvent::end_element())
