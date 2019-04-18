@@ -2,15 +2,22 @@
 extern crate derive_builder;
 #[macro_use]
 extern crate structopt;
+#[macro_use]
+extern crate serde_derive;
+#[macro_use]
+extern crate lazy_static;
 
+mod conf;
 mod opts;
 
+use conf::*;
 use opts::*;
 use std::env;
 use std::fs::File;
-use std::io::{self, Write};
+use std::io::{self, Read, Write};
 use std::io::{BufRead, BufReader};
 
+use dirs;
 use xml::writer::{EmitterConfig, EventWriter, Result as XResult, XmlEvent};
 
 #[derive(Builder, Debug)]
@@ -38,10 +45,38 @@ impl Track {
         w.write(XmlEvent::start_element("p"))?;
         w.write(XmlEvent::characters(&self.title))?;
         w.write(XmlEvent::end_element())?;
-        w.write(XmlEvent::start_element("video").attr("controls", "controls").attr("preload", "none"))?;
+        w.write(
+            XmlEvent::start_element("video")
+                .attr("controls", "controls")
+                .attr("preload", "none"),
+        )?;
         w.write(XmlEvent::start_element("source").attr("src", &self.url))?;
         w.write(XmlEvent::end_element())?;
         w.write(XmlEvent::end_element())
+    }
+}
+
+lazy_static! {
+    static ref CONFIG: Config = config().unwrap_or(Config::default());
+}
+
+fn config() -> Option<Config> {
+    match dirs::config_dir() {
+        None => {
+            eprintln!("Couldn't locate configuration directory, proceeding with default config");
+            None
+        }
+        Some(dir) => {
+            let mut file_path = dir;
+            file_path.push("aria2xspf.toml");
+            if !file_path.exists() {
+                return None;
+            }
+            let mut file = File::open(file_path).expect("Failed to load config file");
+            let mut contents = String::new();
+            file.read_to_string(&mut contents).expect("Failed to decode config");
+            Some(toml::from_str(&contents).expect("Failed to parse config"))
+        }
     }
 }
 
@@ -65,6 +100,24 @@ fn main() {
 fn convert<I: Iterator<Item = Track>, W: Write>(html: bool, tracks: I, w: &mut EventWriter<W>) -> XResult<()> {
     if html {
         w.write(XmlEvent::start_element("html"))?;
+        {
+            w.write(XmlEvent::start_element("head"))?;
+            for url in CONFIG.include.js.iter() {
+                w.write(
+                    XmlEvent::start_element("script")
+                        .attr("type", "text/javascript")
+                        .attr("src", url),
+                )?;
+            }
+            for url in CONFIG.include.css.iter() {
+                w.write(
+                    XmlEvent::start_element("link")
+                        .attr("rel", "stylesheet")
+                        .attr("href", url),
+                )?;
+            }
+            w.write(XmlEvent::end_element())?;
+        }
         w.write(XmlEvent::start_element("body"))?;
     } else {
         w.write(
