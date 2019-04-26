@@ -108,6 +108,8 @@ fn convert<I: Iterator<Item = Track>, W: Write>(html: bool, tracks: I, w: &mut E
                         .attr("type", "text/javascript")
                         .attr("src", url),
                 )?;
+                 w.write(XmlEvent::characters(""))?;
+                            w.write(XmlEvent::end_element())?;
             }
             for url in CONFIG.include.css.iter() {
                 w.write(
@@ -115,6 +117,8 @@ fn convert<I: Iterator<Item = Track>, W: Write>(html: bool, tracks: I, w: &mut E
                         .attr("rel", "stylesheet")
                         .attr("href", url),
                 )?;
+                w.write(XmlEvent::characters(""))?;
+                            w.write(XmlEvent::end_element())?;
             }
             w.write(XmlEvent::end_element())?;
         }
