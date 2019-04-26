@@ -1,0 +1,3 @@
+[include]
+js = ["https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.min.js", "https://raw.githubusercontent.com/shimunn/aria2xspf/include/js/resume.js"]
+css = []
