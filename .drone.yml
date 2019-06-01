@@ -1,0 +1,42 @@
+kind: pipeline
+name: default
+
+steps:
+ - name: test
+   image: rust:1.34.0
+   environment:
+    CARGO_HOME: /drone/.cargo
+   commands:
+    - cargo test
+    - rustup component add rustfmt
+    - cargo fmt -- --check
+ - name: build_relase
+   image: rust:1.34.0
+   environment:
+    CARGO_HOME: /drone/.cargo
+   commands:
+    - mkdir bin
+    - export CARGO_INSTALL_ROOT=$PWD
+    - rustup target add x86_64-unknown-linux-musl
+    - cargo install --path . --target x86_64-unknown-linux-musl
+    - mkdir dist
+    - tar cvzf binary.tar.gz bin/*
+   when:
+    event:    
+    - tag
+ - name: gitea_release
+   image: plugins/gitea-release
+   settings:
+     api_key:
+      from_secret: gitea_tkn
+     base_url:
+      from_secret: gitea_url
+     files:
+       - binary.tar.gz
+     checksum:
+       - md5
+       - sha512
+   when:
+     event: 
+      - tag
+       
