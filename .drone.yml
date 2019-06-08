@@ -3,15 +3,27 @@ name: default
 
 steps:
  - name: test
-   image: rust:1.34.0
+   image: rust:1.35.0
    environment:
     CARGO_HOME: /drone/.cargo
    commands:
     - cargo test
+ - name: fmt
+   image: rust:1.35.0
+   environment:
+    CARGO_HOME: /drone/.cargo
+   commands:
     - rustup component add rustfmt
     - cargo fmt -- --check
+ - name: clippy
+   image: rust:1.35.0
+   environment:
+    CARGO_HOME: /drone/.cargo
+   commands:
+    - rustup component add clippy
+    - cargo clippy
  - name: build_relase
-   image: rust:1.34.0
+   image: rust:1.35.0
    environment:
     CARGO_HOME: /drone/.cargo
    commands:
