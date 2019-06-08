@@ -11,13 +11,13 @@ mod conf;
 mod opts;
 
 use conf::*;
+use dirs;
 use opts::*;
 use std::env;
 use std::fs::File;
-use std::io::{self, Read, Write};
+use std::io::{self, Read, Stdin, Write};
 use std::io::{BufRead, BufReader};
-
-use dirs;
+use std::process::exit;
 use xml::writer::{EmitterConfig, EventWriter, Result as XResult, XmlEvent};
 
 #[derive(Builder, Debug)]
@@ -82,6 +82,14 @@ fn config() -> Option<Config> {
 
 fn main() {
     let opts = Opts::from_args();
+    if opts.input == opts.output {
+        eprintln!("Input and output are the same file! {:?}\nContinue(y/n): ", opts.input);
+        match io::stdin().bytes().next() {
+            Some(Ok(r)) if r as char == 'y' => (),
+            Some(Ok(_)) => exit(1),
+            _ => (), //Stdin closed, assume in == out is intentional
+        }
+    }
     let file = File::open(opts.input).expect("Failed to open file!");
     let mut out = File::create(opts.output).expect("Failed to open OUTPUT file!");
     let mut writer = EmitterConfig::new().perform_indent(true).create_writer(&mut out);
@@ -108,8 +116,8 @@ fn convert<I: Iterator<Item = Track>, W: Write>(html: bool, tracks: I, w: &mut E
                         .attr("type", "text/javascript")
                         .attr("src", url),
                 )?;
-                 w.write(XmlEvent::characters(""))?;
-                            w.write(XmlEvent::end_element())?;
+                w.write(XmlEvent::characters(""))?;
+                w.write(XmlEvent::end_element())?;
             }
             for url in CONFIG.include.css.iter() {
                 w.write(
@@ -118,7 +126,7 @@ fn convert<I: Iterator<Item = Track>, W: Write>(html: bool, tracks: I, w: &mut E
                         .attr("href", url),
                 )?;
                 w.write(XmlEvent::characters(""))?;
-                            w.write(XmlEvent::end_element())?;
+                w.write(XmlEvent::end_element())?;
             }
             w.write(XmlEvent::end_element())?;
         }
